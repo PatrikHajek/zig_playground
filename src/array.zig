@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn array() !void {
+pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
