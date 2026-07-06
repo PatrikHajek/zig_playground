@@ -113,4 +113,14 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     // test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
+
+    // --- Add this for ZLS Build-On-Save ---
+    const exe_check = b.addExecutable(.{
+        .name = "hello_world",
+        .root_module = exe_mod,
+    });
+
+    const check_step = b.step("check", "Check if it compiles");
+    check_step.dependOn(&exe_check.step);
+    check_step.dependOn(&run_exe_unit_tests.step);
 }
