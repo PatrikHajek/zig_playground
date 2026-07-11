@@ -15,14 +15,14 @@ const CARD_COUNT = blk: {
 
 const CARD_COUNT_PER_PLAYER_MAX = 7;
 
-const Card = u4;
+const Card = u8;
 
 const Player = struct {
     index: u8,
     busted: bool,
     cards: Array(Card, 7),
 
-    fn init(index: u5) Player {
+    fn init(index: u8) Player {
         return .{ .index = index, .busted = false, .cards = Array(Card, 7).init() };
     }
 
