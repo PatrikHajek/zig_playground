@@ -117,7 +117,7 @@ fn generate_deck() [CARD_COUNT]Card {
         }
     }
 
-    // FIX: Exceeds branches in comptime.
+    @setEvalBranchQuota(10_000);
     var prng = std.Random.DefaultPrng.init(50);
     const random = prng.random();
     random.shuffleWithIndex(Card, &deck, u64);
