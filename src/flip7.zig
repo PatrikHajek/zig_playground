@@ -64,22 +64,23 @@ fn Array(comptime T: type, comptime size: u64) type {
     };
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     // var gpa = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     // defer gpa.deinit();
     // const allocator = gpa.allocator();
 
-    const players = try play_round();
+    const players = try play_round(init);
     for (players) |p| {
         p.print();
     }
 }
 
-fn play_round() error{OutOfMemory}![PLAYER_COUNT]Player {
+fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
     var players: [PLAYER_COUNT]Player = undefined;
     for (0..PLAYER_COUNT) |i| players[i] = Player.init(@intCast(i));
 
-    const deck = comptime generate_deck();
+    var deck = comptime generate_deck();
+    shuffle_deck(init, &deck);
     // Deck is not reshuffled, so too many players can essentially cause
     // deadlock.
     comptime assert(PLAYER_COUNT * CARD_COUNT_PER_PLAYER_MAX < deck.len);
@@ -118,12 +119,15 @@ fn generate_deck() [CARD_COUNT]Card {
         }
     }
 
-    @setEvalBranchQuota(10_000);
-    var prng = std.Random.DefaultPrng.init(50);
-    const random = prng.random();
-    random.shuffleWithIndex(Card, &deck, u64);
-
     return deck;
+}
+
+fn shuffle_deck(init: std.process.Init, deck: *[CARD_COUNT]Card) void {
+    var seed: u64 = undefined;
+    init.io.random(std.mem.asBytes(&seed));
+    var prng = std.Random.DefaultPrng.init(seed);
+    const random = prng.random();
+    random.shuffleWithIndex(Card, deck, u64);
 }
 
 test "Array" {
