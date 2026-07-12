@@ -87,7 +87,7 @@ fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
 
     // FIX: All players' cards are 170.
     for (deck, 0..) |card, turn| {
-        var player = players[turn % PLAYER_COUNT];
+        var player = &players[turn % PLAYER_COUNT];
 
         if (!player.cards.has(card)) {
             try player.cards.add(card);
