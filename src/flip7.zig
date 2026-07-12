@@ -124,3 +124,26 @@ fn generate_deck() [CARD_COUNT]Card {
 
     return deck;
 }
+
+test "Array" {
+    const testing = std.testing;
+
+    var arr = Array(i32, 2).init();
+
+    try testing.expectEqual(0, arr.count);
+    try testing.expect(!arr.has(5));
+
+    try arr.add(5);
+    try testing.expectEqual(1, arr.count);
+    try testing.expect(arr.has(5));
+
+    try arr.add(7);
+    try testing.expectEqual(2, arr.count);
+    try testing.expect(arr.has(5));
+    try testing.expect(arr.has(7));
+
+    try testing.expectEqual(error.OutOfMemory, arr.add(9));
+    try testing.expectEqual(2, arr.count);
+    try testing.expect(arr.has(5));
+    try testing.expect(arr.has(7));
+}
