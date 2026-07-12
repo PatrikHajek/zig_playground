@@ -109,7 +109,7 @@ pub fn main(init: std.process.Init) !void {
 
     const player_count = PLAYER_COUNT * ROUND_COUNT;
     const winner_rate = winner_count / player_count;
-    std.debug.print("You win {}% of games\n", .{winner_rate * 100});
+    std.debug.print("You win {}% of rounds\n", .{winner_rate * 100});
 }
 
 fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
