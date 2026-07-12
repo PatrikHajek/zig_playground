@@ -5,7 +5,7 @@ const PLAYER_COUNT = 5;
 // const PLAYER_COUNT_MAX = 18;
 
 const CARD_COUNT = blk: {
-    const deck = [_]Card{ 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12 };
+    const deck = [_]Card{ 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
     var i: u8 = 0;
     for (deck) |n| {
         i += n;
