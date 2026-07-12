@@ -36,11 +36,11 @@ const Player = struct {
     }
 };
 
-fn Array(comptime T: type, comptime size: u64) type {
+fn Array(comptime T: type, comptime size: usize) type {
     return struct {
         buffer: [size]T,
         /// Size of currently filled area of the buffer.
-        count: u64,
+        count: usize,
 
         const Self = @This();
 
