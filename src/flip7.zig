@@ -56,8 +56,8 @@ fn Array(comptime T: type, comptime size: u64) type {
         }
 
         fn has(self: *const Self, v: T) bool {
-            for (0..self.count) |i| {
-                if (self.buffer[i] == v) return true;
+            for (self.buffer[0..self.count]) |item| {
+                if (item == v) return true;
             }
             return false;
         }
