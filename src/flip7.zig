@@ -19,13 +19,20 @@ const CARD_COUNT_PER_PLAYER_MAX = 7;
 
 const Card = u8;
 
+const PlayerState = enum {
+    playing,
+    /// Player has either gotten Flip7 or stopped voluntarily.
+    won,
+    lost,
+};
+
 const Player = struct {
     index: u8,
-    busted: bool,
+    state: PlayerState,
     cards: Array(Card, 7),
 
     fn init(index: u8) Player {
-        return .{ .index = index, .busted = false, .cards = Array(Card, 7).init() };
+        return .{ .index = index, .state = PlayerState.playing, .cards = Array(Card, 7).init() };
     }
 
     fn print(self: *const Player) void {
@@ -82,7 +89,7 @@ pub fn main(init: std.process.Init) !void {
     for (0..ROUND_COUNT) |_| {
         const players = try play_round(init);
         const loser: Player = for (players) |p| {
-            if (p.busted) break p;
+            if (p.state == .lost) break p;
         } else unreachable;
         card_sum += @floatFromInt(loser.cards.count);
     }
@@ -106,14 +113,16 @@ fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
     for (deck, 0..) |card, turn| {
         var player = &players[turn % PLAYER_COUNT];
 
+        if (player.state != .playing) continue;
+
         if (!player.cards.has(card)) {
             try player.cards.add(card);
             if (player.cards.count == 7) {
-                break;
+                player.state = .won;
             }
         } else {
             try player.cards.add(card);
-            player.busted = true;
+            player.state = .lost;
             break;
         }
     }
