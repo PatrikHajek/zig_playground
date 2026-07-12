@@ -28,9 +28,11 @@ const Player = struct {
 
     fn print(self: *const Player) void {
         std.debug.print("Player {}:\n", .{self.index + 1});
-        for (self.cards.buffer) |card| {
-            std.debug.print("Card: {}\n", .{card});
+        std.debug.print("  Cards: ", .{});
+        for (self.cards.buffer[0..self.cards.count]) |card| {
+            std.debug.print("{} ", .{card});
         }
+        std.debug.print("\n", .{});
     }
 };
 
