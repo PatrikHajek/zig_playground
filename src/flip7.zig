@@ -109,7 +109,6 @@ fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
     // deadlock.
     comptime assert(PLAYER_COUNT * CARD_COUNT_PER_PLAYER_MAX < deck.len);
 
-    // FIX: All players' cards are 170.
     for (deck, 0..) |card, turn| {
         var player = &players[turn % PLAYER_COUNT];
 
