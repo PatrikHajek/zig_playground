@@ -49,6 +49,7 @@ fn Array(comptime T: type, comptime size: u64) type {
         fn add(self: *Self, v: T) error{OutOfMemory}!void {
             if (self.count != size) {
                 self.buffer[self.count] = v;
+                self.count += 1;
             } else {
                 return error.OutOfMemory;
             }
