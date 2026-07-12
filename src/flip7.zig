@@ -89,10 +89,12 @@ pub fn main(init: std.process.Init) !void {
     var winner_count: f32 = 0;
     for (0..ROUND_COUNT) |_| {
         const players = try play_round(init);
-        const loser: Player = for (players) |p| {
-            if (p.state == .lost) break p;
-        } else unreachable;
-        loser_card_sum += @floatFromInt(loser.cards.count);
+
+        for (players) |p| {
+            if (p.state == .lost) {
+                loser_card_sum += @floatFromInt(p.cards.count);
+            }
+        }
 
         for (players) |p| {
             if (p.state == .won) {
@@ -102,8 +104,8 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const ROUND_COUNT_f32: f32 = @floatFromInt(ROUND_COUNT);
-    const loser_card_count_average_per_round: f32 = loser_card_sum / ROUND_COUNT_f32;
-    std.debug.print("You bust around the {} round\n", .{loser_card_count_average_per_round});
+    const loser_card_count_average_per_round: f32 = loser_card_sum / PLAYER_COUNT / ROUND_COUNT_f32;
+    std.debug.print("You bust in round {} on average\n", .{loser_card_count_average_per_round});
 
     const player_count = PLAYER_COUNT * ROUND_COUNT;
     const winner_rate = winner_count / player_count;
