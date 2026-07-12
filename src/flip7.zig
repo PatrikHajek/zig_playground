@@ -85,18 +85,18 @@ pub fn main(init: std.process.Init) !void {
     //     p.print();
     // }
 
-    var card_sum: f32 = 0;
+    var loser_card_sum: f32 = 0;
     for (0..ROUND_COUNT) |_| {
         const players = try play_round(init);
         const loser: Player = for (players) |p| {
             if (p.state == .lost) break p;
         } else unreachable;
-        card_sum += @floatFromInt(loser.cards.count);
+        loser_card_sum += @floatFromInt(loser.cards.count);
     }
 
     const ROUND_COUNT_f32: f32 = @floatFromInt(ROUND_COUNT);
-    const card_count_average_per_round: f32 = card_sum / ROUND_COUNT_f32;
-    std.debug.print("You bust around the {} round", .{card_count_average_per_round});
+    const loser_card_count_average_per_round: f32 = loser_card_sum / ROUND_COUNT_f32;
+    std.debug.print("You bust around the {} round\n", .{loser_card_count_average_per_round});
 }
 
 fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
