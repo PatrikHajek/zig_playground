@@ -129,7 +129,7 @@ fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
 
         if (!player.cards.has(card)) {
             try player.cards.add(card);
-            if (player.cards.count == 7) {
+            if (player.cards.count == CARD_COUNT_PER_PLAYER_MAX) {
                 player.state = .won;
             }
         } else {
