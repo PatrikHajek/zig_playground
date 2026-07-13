@@ -1,6 +1,8 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
+// TODO: Calculate with modifier cards included.
+
 const ROUND_COUNT = 50;
 
 const PLAYER_COUNT = 5;
