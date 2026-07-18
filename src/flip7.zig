@@ -34,7 +34,11 @@ const Player = struct {
     cards: Array(Card, CARD_COUNT_PER_PLAYER_MAX),
 
     fn init(index: u8) Player {
-        return .{ .index = index, .state = PlayerState.playing, .cards = Array(Card, CARD_COUNT_PER_PLAYER_MAX).init() };
+        return .{
+            .index = index,
+            .state = PlayerState.playing,
+            .cards = Array(Card, CARD_COUNT_PER_PLAYER_MAX).init(),
+        };
     }
 
     fn print(self: *const Player) void {
