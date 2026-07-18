@@ -29,20 +29,18 @@ const PlayerState = enum {
 };
 
 const Player = struct {
-    index: u8,
     state: PlayerState,
     cards: Array(Card, CARD_COUNT_PER_PLAYER_MAX),
 
-    fn init(index: u8) Player {
+    fn init() Player {
         return .{
-            .index = index,
             .state = PlayerState.playing,
             .cards = Array(Card, CARD_COUNT_PER_PLAYER_MAX).init(),
         };
     }
 
-    fn print(self: *const Player) void {
-        std.debug.print("Player {}:\n", .{self.index + 1});
+    fn print(self: *const Player, index: u8) void {
+        std.debug.print("Player {}:\n", .{index + 1});
         std.debug.print("  Cards: ", .{});
         for (self.cards.buffer[0..self.cards.count]) |card| {
             std.debug.print("{} ", .{card});
@@ -120,7 +118,7 @@ pub fn main(init: std.process.Init) !void {
 
 fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
     var players: [PLAYER_COUNT]Player = undefined;
-    for (0..PLAYER_COUNT) |i| players[i] = Player.init(@intCast(i));
+    for (0..PLAYER_COUNT) |i| players[i] = Player.init();
 
     var deck = comptime generate_deck();
     shuffle_deck(init, &deck);
