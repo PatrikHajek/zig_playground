@@ -118,7 +118,7 @@ pub fn main(init: std.process.Init) !void {
 
 fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
     var players: [PLAYER_COUNT]Player = undefined;
-    for (0..PLAYER_COUNT) |i| players[i] = Player.init();
+    for (&players) |*player| player.* = Player.init();
 
     var deck = comptime generate_deck();
     shuffle_deck(init, &deck);
