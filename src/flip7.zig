@@ -31,10 +31,10 @@ const PlayerState = enum {
 const Player = struct {
     index: u8,
     state: PlayerState,
-    cards: Array(Card, 7),
+    cards: Array(Card, CARD_COUNT_PER_PLAYER_MAX),
 
     fn init(index: u8) Player {
-        return .{ .index = index, .state = PlayerState.playing, .cards = Array(Card, 7).init() };
+        return .{ .index = index, .state = PlayerState.playing, .cards = Array(Card, CARD_COUNT_PER_PLAYER_MAX).init() };
     }
 
     fn print(self: *const Player) void {
