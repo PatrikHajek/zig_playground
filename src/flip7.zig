@@ -1,25 +1,38 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
-// TODO: Calculate with modifier cards included.
-
 const ROUND_COUNT = 50;
 
 const PLAYER_COUNT = 5;
 // const PLAYER_COUNT_MAX = 18;
 
-const CARD_COUNT = blk: {
-    const deck = [_]Card{ 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+const CARD_NUMBER_COUNT = blk: {
+    const deck = [_]CardNumber{ 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
     var i: u8 = 0;
     for (deck) |n| {
         i += n;
     }
     break :blk i;
 };
+const CARD_NUMBER_COUNT_WIN = 7;
+const CARD_SCORE_COUNT = 6;
+const CARD_ACTION_COUNT = 9;
 
-const CARD_COUNT_PER_PLAYER_MAX = 7;
+const CARD_COUNT = CARD_NUMBER_COUNT + CARD_SCORE_COUNT + CARD_ACTION_COUNT;
 
-const Card = u8;
+const CARD_COUNT_PER_PLAYER_MAX =
+    CARD_NUMBER_COUNT_WIN + CARD_SCORE_COUNT
+    // Freeze can appear only once.
+    + (CARD_ACTION_COUNT - 2);
+
+const Card = union(enum) {
+    number: CardNumber,
+    score: CardScore,
+    action: CardAction,
+};
+const CardNumber = u8;
+const CardScore = enum { plus_2, plus_4, plus_6, plus_8, plus_10, times_2 };
+const CardAction = enum { freeze, flip_three, second_chance };
 
 const PlayerState = enum {
     playing,
@@ -32,11 +45,59 @@ const Player = struct {
     state: PlayerState,
     cards: Array(Card, CARD_COUNT_PER_PLAYER_MAX),
 
+    const Self = @This();
+
     fn init() Player {
         return .{
             .state = PlayerState.playing,
             .cards = Array(Card, CARD_COUNT_PER_PLAYER_MAX).init(),
         };
+    }
+
+    const Draw = enum {
+        // Go to the next player.
+        next,
+        /// Draw 3 cards for this player.
+        flip_three,
+    };
+    fn draw(self: *Self, card: Card) error{OutOfMemory}!Draw {
+        assert(self.state == .playing);
+
+        switch (card) {
+            .number => {
+                if (!self.cards.has(card)) {
+                    try self.cards.add(card);
+
+                    var card_number_count: u8 = 0;
+                    for (self.cards.buffer[0..self.cards.count]) |c| {
+                        if (c == .number) {
+                            card_number_count += 1;
+                        }
+                    }
+                    if (card_number_count == CARD_NUMBER_COUNT_WIN) {
+                        self.state = .won;
+                    }
+                } else {
+                    try self.cards.add(card);
+                    self.state = .lost;
+                }
+            },
+            .score => {
+                try self.cards.add(card);
+            },
+            .action => |c| {
+                try self.cards.add(card);
+                switch (c) {
+                    .freeze => {
+                        self.state = .lost;
+                    },
+                    .flip_three => return Draw.flip_three,
+                    else => {},
+                }
+            },
+        }
+
+        return Draw.next;
     }
 
     fn print(self: *const Player, index: u8) void {
@@ -95,7 +156,7 @@ pub fn main(init: std.process.Init) !void {
         const players = try play_round(init);
 
         for (players) |p| {
-            if (p.state == .lost) {
+            if (p.state == .lost and !p.cards.has(Card{ .action = .freeze })) {
                 loser_card_sum += @floatFromInt(p.cards.count);
             }
         }
@@ -120,25 +181,53 @@ fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
     var players: [PLAYER_COUNT]Player = undefined;
     for (&players) |*player| player.* = Player.init();
 
-    var deck = comptime generate_deck();
-    shuffle_deck(init, &deck);
-    // Deck is not reshuffled, so too many players can essentially cause
-    // deadlock.
-    comptime assert(PLAYER_COUNT * CARD_COUNT_PER_PLAYER_MAX < deck.len);
+    var deck: [CARD_COUNT]Card = undefined;
 
-    for (deck, 0..) |card, turn| {
-        var player = &players[turn % PLAYER_COUNT];
+    var player_count_playing: u8 = PLAYER_COUNT;
+    var player_index: u8 = 0;
+    var cards_to_draw: u8 = 1;
+    for (0..(PLAYER_COUNT * CARD_COUNT_PER_PLAYER_MAX)) |turn| {
+        const card_index = turn % CARD_COUNT;
+        if (card_index == 0) {
+            deck = comptime generate_deck();
+            shuffle_deck(init, &deck);
+        }
 
-        if (player.state != .playing) continue;
-
-        if (!player.cards.has(card)) {
-            try player.cards.add(card);
-            if (player.cards.count == CARD_COUNT_PER_PLAYER_MAX) {
-                player.state = .won;
+        if (cards_to_draw == 0) {
+            cards_to_draw = 1;
+            if (player_index < PLAYER_COUNT - 1) {
+                player_index += 1;
+            } else {
+                player_index = 0;
             }
-        } else {
-            try player.cards.add(card);
-            player.state = .lost;
+        }
+
+        var player = &players[player_index];
+
+        if (player.state != .playing) {
+            cards_to_draw -= 1;
+            continue;
+        }
+
+        const card = deck[card_index];
+        cards_to_draw -= 1;
+        switch (try player.draw(card)) {
+            .flip_three => {
+                cards_to_draw += 3;
+            },
+            else => {},
+        }
+
+        switch (player.state) {
+            .won => break,
+            .lost => {
+                player_count_playing -= 1;
+                cards_to_draw = 0;
+                if (player_count_playing == 0) {
+                    break;
+                }
+            },
+            else => {},
         }
     }
 
@@ -146,17 +235,46 @@ fn play_round(init: std.process.Init) error{OutOfMemory}![PLAYER_COUNT]Player {
 }
 
 fn generate_deck() [CARD_COUNT]Card {
+    var filled_count = 0;
+
     var deck: [CARD_COUNT]Card = undefined;
-    var card: Card = 0;
-    var card_count: Card = 0;
-    for (0..CARD_COUNT) |i| {
-        deck[i] = card;
+    var card_number: CardNumber = 0;
+    var card_count: CardNumber = 0;
+    for (filled_count..CARD_NUMBER_COUNT) |i| {
+        deck[i] = Card{ .number = card_number };
         card_count += 1;
 
-        if (card_count >= card) {
-            card += 1;
+        if (card_count >= card_number) {
+            card_number += 1;
             card_count = 0;
         }
+    }
+
+    filled_count += CARD_NUMBER_COUNT;
+
+    for (filled_count..(filled_count + CARD_SCORE_COUNT)) |i| {
+        const card = switch (i % @typeInfo(CardScore).@"enum".fields.len) {
+            0 => CardScore.plus_2,
+            1 => CardScore.plus_4,
+            2 => CardScore.plus_6,
+            3 => CardScore.plus_8,
+            4 => CardScore.plus_10,
+            5 => CardScore.times_2,
+            else => unreachable,
+        };
+        deck[i] = Card{ .score = card };
+    }
+
+    filled_count += CARD_SCORE_COUNT;
+
+    for (filled_count..(filled_count + CARD_ACTION_COUNT)) |i| {
+        const card = switch (i % @typeInfo(CardAction).@"enum".fields.len) {
+            0 => CardAction.freeze,
+            1 => CardAction.flip_three,
+            2 => CardAction.second_chance,
+            else => unreachable,
+        };
+        deck[i] = Card{ .action = card };
     }
 
     return deck;
