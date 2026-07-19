@@ -133,7 +133,7 @@ fn Array(comptime T: type, comptime size: usize) type {
 
         fn has(self: *const Self, v: T) bool {
             for (self.buffer[0..self.count]) |item| {
-                if (item == v) return true;
+                if (std.meta.eql(item, v)) return true;
             }
             return false;
         }
